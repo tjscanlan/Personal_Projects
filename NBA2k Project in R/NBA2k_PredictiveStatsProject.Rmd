@@ -1,0 +1,239 @@
+---
+title: "DSE1002 Final Project"
+author: "TJS"
+date: "12-15-2021"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(mosaic)
+library(mosaicData)
+library(readr)
+library(readxl)
+library(rpart)
+library(rpart.plot)
+library(neuralnet)
+```
+
+```{r}
+playerRankings <- read.csv("nba_rankings_2014-2020.csv")
+playerData <- read.csv("player_data.csv")
+```
+
+```{r error=FALSE, warning=FALSE, message=FALSE}
+invisible({capture.output({
+playerData %>% 
+  filter(year_end>2013) %>%  #filters out players that retired before the 2014 season
+  rename("PLAYER"=name) %>% #renames name column 
+  separate(position, c("primary", "secondary"))  #seperates position colummn
+
+
+playerRankings %>% 
+  filter(SEASON == "2019-20",
+         GP >= 1)
+})})
+```
+#QUANTITATIVE ASSESSMENT
+```{r error=FALSE, warning=FALSE, message=FALSE}
+invisible({capture.output({
+table(playerData$height)
+
+playerData2 <- playerData %>% 
+  mutate(heightinches = 
+           ifelse(height=="5-10",70,
+                  ifelse(height=="5-11",71,
+                         ifelse(height=="6-0",72,
+                                ifelse(height=="6-1",73,
+                                       ifelse(height=="6-2",74,
+                                              ifelse(height=="6-3",75,
+                                                     ifelse(height=="5-3",63,
+                                                            ifelse(height=="5-5",65,
+                                                                   ifelse(height=="5-6",66,
+                                                                          ifelse(height=="5-7",67,
+                                                                                 ifelse(height=="5-8",68,
+                                                                                        ifelse(height=="5-9",69,
+                                                                                               ifelse(height=="6-4",76,
+                                                                                                      ifelse(height=="6-5",77,
+                                                                                                             ifelse(height=="6-6",78,
+                                                                                                                    ifelse(height=="6-7",79,
+                                                                                                                           ifelse(height=="6-8",80,
+                                                                                                                                  ifelse(height=="6-9",81,
+                                                                                                                                         ifelse(height=="6-10",82,
+                                                                                                                                                ifelse(height=="6-11",83,
+                                                                                                                                                       ifelse(height=="7-0",84,
+                                                                                                                                                              ifelse(height=="7-1",85,
+                                                                                                                                                                     ifelse(height=="7-2",86,
+                                                                                                                                                                            ifelse(height=="7-3",87,
+                                                                                                                                                                                   ifelse(height=="7-4",88,
+                                                                                                                                                                                          ifelse(height=="7-5",89,
+                                                                                                                                                                                                 ifelse(height=="7-6",90,
+                                                                                                                                                                                                    ifelse(height=="7-7",91,
+                                                                                                                                                                                                           ifelse(height == NA)))))))))))))))))))))))))))))) %>% 
+  rename("PLAYER"=name)
+})})
+```
+```{r}
+nba_fullset <- inner_join(playerData2, playerRankings, by = "PLAYER")
+```
+
+```{r error=FALSE, warning=FALSE, message=FALSE}
+invisible({capture.output({
+nba_fullset %>% 
+  dplyr::select(-height, -birth_date)
+})})
+```
+
+```{r}
+season1 <- nba_fullset %>% 
+  filter(SEASON == "2014-15") %>% 
+  dplyr::select(heightinches, AGE, GP, MIN, W, L, PTS, FGA, FGM, FG., FTA, FTM, FT., X3PA, X3PM, X3P., OREB, DREB, REB, AST, STL, BLK)
+season2 <- nba_fullset %>% 
+  filter(SEASON == "2015-16") %>% 
+  dplyr::select(heightinches, AGE, GP, MIN, W, L, PTS, FGA, FGM, FG., FTA, FTM, FT., X3PA, X3PM, X3P., OREB, DREB, REB, AST, STL, BLK)
+season3 <- nba_fullset %>% 
+  filter(SEASON == "2016-17") %>% 
+  dplyr::select(heightinches, AGE, GP, MIN, W, L, PTS, FGA, FGM, FG., FTA, FTM, FT., X3PA, X3PM, X3P., OREB, DREB, REB, AST, STL, BLK)
+season4 <- nba_fullset %>% 
+  filter(SEASON == "2017-18") %>% 
+  dplyr::select(heightinches, AGE, GP, MIN, W, L, PTS, FGA, FGM, FG., FTA, FTM, FT., X3PA, X3PM, X3P., OREB, DREB, REB, AST, STL, BLK)
+season5 <- nba_fullset %>% 
+  filter(SEASON == "2018-19") %>% 
+  dplyr::select(heightinches, AGE, GP, MIN, W, L, PTS, FGA, FGM, FG., FTA, FTM, FT., X3PA, X3PM, X3P., OREB, DREB, REB, AST, STL, BLK)
+season6 <- nba_fullset %>% 
+  filter(SEASON == "2019-20") %>% 
+  dplyr::select(heightinches, AGE, GP, MIN, W, L, PTS, FGA, FGM, FG., FTA, FTM, FT., X3PA, X3PM, X3P., OREB, DREB, REB, AST, STL, BLK)
+```
+
+```{r}
+#s1LM.1 <- lm(GP ~ AGE + weight + heightinches + MIN + W + PTS + X3P., season1)
+#msummary(s1LM.1)
+s1LM.2 <- lm(GP ~ MIN + W + PTS, season1)
+msummary(s1LM.2)
+#s2LM.1 <- lm(GP ~ AGE + weight + heightinches + MIN + W + PTS + X3P., season2)
+#msummary(s2LM.1)
+s2LM.2 <- lm(GP ~ MIN + W + PTS, season2)
+msummary(s2LM.2)
+#s3LM.1 <- lm(GP ~ AGE + weight + heightinches + MIN + W + PTS + X3P., season3)
+#msummary(s3LM.1)
+s3LM.2 <- lm(GP ~ MIN + W + PTS, season3)
+msummary(s3LM.2)
+#s4LM.1 <- lm(GP ~ AGE + weight + heightinches + MIN + W + PTS + X3P., season4)
+#msummary(s4LM.1)
+s4LM.2 <- lm(GP ~ MIN + W + PTS, season4)
+msummary(s4LM.2)
+#s5LM.1 <- lm(GP ~ AGE + weight + heightinches + MIN + W + PTS + X3P., season5)
+#msummary(s5LM.1)
+s5LM.2 <- lm(GP ~ MIN + W + PTS, season5)
+msummary(s5LM.2)
+```
+###Season 1: 65.55% accuracy
+###Season 2: 65.15% accuracy
+###Season 3: 70.81% accuracy
+###Season 4: 71.69% accuracy
+###Season 5: 65.52% accuracy
+
+###Season 6 Predictions
+```{r}
+form <- as.formula("GP ~ MIN + W + PTS")
+
+neuralnetGP.s6 <- neuralnet(form, season6)
+plot(neuralnetGP.s6, system = "ggplot2")
+
+season6GP.predict <- predict(neuralnetGP.s6, season6)
+head(season6GP.predict, 10)
+confint(season6GP.predict)
+head(season6$GP, 10)
+```
+
+
+#CATEGORICAL
+```{r}
+nba_fullsetHL <- nba_fullset %>% 
+  mutate(GPhighlow = 
+           ifelse(GP > 50, "high",
+                ifelse(GP <= 50, "low",
+                       ifelse(NA))),
+         threePTperc = (X3PM / X3PA),
+         fieldGoalperc = (FGM / FGA),
+         freeThrowperc = (FTM / FTA))
+
+
+
+nba_fullsetHL <- na.omit(nba_fullsetHL)
+nba_fullsetHL$GPhighlow <- as.factor(nba_fullsetHL$GPhighlow)
+
+nba_fullsetHL1 <- subset(nba_fullsetHL, threePTperc != 0 &
+                           threePTperc != 1 &
+                           fieldGoalperc != 0 &
+                           fieldGoalperc != 1 &
+                           freeThrowperc != 0 &
+                           freeThrowperc != 1)
+
+nba_fullsetHL1 <- nba_fullsetHL1 %>%  
+  mutate(threePT.HL =
+           ifelse(threePTperc > 0.379, "high",
+                  ifelse(threePTperc <= 0.379, "low",
+                         ifelse(NA))),
+         fieldGoal.HL = 
+           ifelse(fieldGoalperc > 0.417, "high",
+                  ifelse(fieldGoalperc <= 0.417, "low",
+                         ifelse(NA))),
+         freeThrow.HL = 
+           ifelse(freeThrowperc > 0.6, "high",
+                  ifelse(freeThrowperc <= 0.6, "low",
+                         ifelse(NA))))
+
+nba_fullsetHL1$threePT.HL <- as.factor(nba_fullsetHL1$threePT.HL)
+nba_fullsetHL1$fieldGoal.HL <- as.factor(nba_fullsetHL1$fieldGoal.HL)
+nba_fullsetHL1$freeThrow.HL <- as.factor(nba_fullsetHL1$freeThrow.HL)
+
+HLseason1 <- nba_fullsetHL1 %>% 
+  filter(SEASON == "2014-15")
+HLseason2 <- nba_fullsetHL1 %>% 
+  filter(SEASON == "2015-16")
+HLseason3 <- nba_fullsetHL1 %>% 
+  filter(SEASON == "2016-17")
+HLseason4 <- nba_fullsetHL1 %>% 
+  filter(SEASON == "2017-18")
+HLseason5 <- nba_fullsetHL1 %>% 
+  filter(SEASON == "2018-19")
+HLseason6 <- nba_fullsetHL1 %>% 
+  filter(SEASON == "2019-20")
+```
+###Season 1
+```{r}
+table(nba_fullsetHL1$GPhighlow)
+summary(nba_fullsetHL1$GPhighlow)
+
+summary(nba_fullsetHL1$threePTperc)
+summary(nba_fullsetHL1$fieldGoalperc)
+summary(nba_fullsetHL1$freeThrowperc)
+```
+
+```{r}
+ptsHL.s1 <- glm(fieldGoal.HL ~ X3PA + FGA, family = "binomial", data = HLseason1)
+msummary(ptsHL.s1)
+ptsHL.s2 <- glm(fieldGoal.HL ~ X3PA + FGA, family = "binomial", data = HLseason2)
+msummary(ptsHL.s2)
+ptsHL.s3 <- glm(fieldGoal.HL ~ X3PA + FGA, family = "binomial", data = HLseason3)
+msummary(ptsHL.s3)
+ptsHL.s4 <- glm(fieldGoal.HL ~ X3PA + FGA, family = "binomial", data = HLseason4)
+msummary(ptsHL.s4)
+ptsHL.s5 <- glm(fieldGoal.HL ~ X3PA + FGA, family = "binomial", data = HLseason5)
+msummary(ptsHL.s5)
+confint(ptsHL.s5)
+
+form <- as.formula("fieldGoal.HL ~ X3PA + FGA")
+decisiontreeHL.s5 <- rpart(form, data = HLseason5)
+decisiontreeHL.s5
+rpart.plot(decisiontreeHL.s5)
+
+dectreeHL.s6predict <- predict(decisiontreeHL.s5, HLseason6, "class")
+dectreeHL.s6predict
+```
+
